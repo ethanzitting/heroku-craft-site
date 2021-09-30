@@ -1,0 +1,8 @@
+baseUrl: $PRIMARY_SITE_URL
+handle: default
+hasUrls: true
+language: en
+name: 'Heroku Craft Site'
+primary: true
+siteGroup: 64268835-711e-461c-949e-0cb68c9f53f5 # Heroku Craft Site
+sortOrder: 1

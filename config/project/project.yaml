@@ -1,0 +1,22 @@
+dateModified: 1633005221
+email:
+  fromEmail: ethanzitting@gmail.com
+  fromName: 'Heroku Craft Site'
+  transportType: craft\mail\transportadapters\Sendmail
+meta:
+  __names__:
+    3aaca88b-a0ff-4761-9488-87f64dfcf129: Common # Common
+    64268835-711e-461c-949e-0cb68c9f53f5: 'Heroku Craft Site' # Heroku Craft Site
+    a2e3a74b-843c-4b96-ac79-a75af3b32870: 'Heroku Craft Site' # Heroku Craft Site
+system:
+  edition: solo
+  live: true
+  name: 'Heroku Craft Site'
+  schemaVersion: 3.7.8
+  timeZone: America/Los_Angeles
+users:
+  allowPublicRegistration: false
+  defaultGroup: null
+  photoSubpath: null
+  photoVolumeUid: null
+  requireEmailVerification: true
