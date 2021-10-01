@@ -3,7 +3,6 @@
 /.vscode
 /vendor
 .DS_Store
-storage/**
 !storage/.gitkeep
 config/license.key
 /node_modules
