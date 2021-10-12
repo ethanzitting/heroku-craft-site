@@ -1,75 +1,67 @@
 # heroku-craft-site
 
 So the OpenSGF group is looking to change their hosting solution for a client's site. We have it hosted with
-    a company fortrabbit, but the client's bank will not send money overseas to pay fortrabbit.
-    The two alternatives we are weighing are a Digital Ocean Cloud Server running a LEMP Stack and heroku.
-    I am investigating heroku first as our parent organization 'Code for America' often is willing to pay the
-    heroku bill for sub-organization projects.
+a company Fortrabbit, but our client's bank will not send money overseas to pay Fortrabbit.
+The two alternatives we are weighing are a Digital Ocean Cloud Server running a LEMP Stack and heroku.
+I am investigating heroku first as our parent organization 'Code for America' often is willing to pay the
+heroku bill for sub-organization projects.
 
-The first question: can you host a craft site on heroku at all.
+## The first question: Can you host a craft site on heroku at all?
 
-After some quick googling, it definitely looks like a solved problem:
+After some quick googling, it definitely looks like a solved problem. 
+
+This guide uses postgres instead of mysql supposedly because it is better supported:
 https://torbensko.com/posts/2019/creating-a-site-using-craftcms-heroku-and-cloudcannon/
-    This guide uses postgres instead of mysql supposedly because it is better supported.
 
-        https://dev.to/coda/how-to-deploy-craft-cms-with-postgres-on-heroku-1c2h
-This guide builds upon the last one and provides some additional supplemental information.
-In the comments were some tools to aid with deployment
-https://deployer.org/
-https://deploybot.com/
-https://www.deployhq.com/
-https://envoyer.io/
+This guide builds upon the last one and provides some additional supplemental information:
+https://dev.to/coda/how-to-deploy-craft-cms-with-postgres-on-heroku-1c2h
+In the comments were some tools to aid with deployment I'm keeping here incase I need them later:
+- https://deployer.org/
+- https://deploybot.com/
+- https://www.deployhq.com/
+- https://envoyer.io/
 
-The final questions to answer before getting my hands dirty:
-Is it feasible to have build scripts automatically or manually run after a git push.
-https://devcenter.heroku.com/articles/github-integration
-    This page in the heroku docs shows that heroku can listen for pushes to main and automatically act on them.
-https://devcenter.heroku.com/changelog-items/1573
+## The final questions to answer before getting my hands dirty:
+Is it feasible to have build scripts automatically or manually run after a git push?
+
+This page in the heroku docs shows that heroku can listen for pushes to main and automatically act on them: https://devcenter.heroku.com/articles/github-integration
+    
+These two articles lead me to believe that you can choose the build commands that automatically run: https://devcenter.heroku.com/changelog-items/1573
 https://devcenter.heroku.com/articles/php-support#build-behavior
-    The above two articles lead me to believe that you can choose the build commands that automatically run.
-https://www.heroku.com/dynos/build
-    This article definitively answers that heroku is very auto-build friendly.
 
-I still question if you can automatically run both a Node and Composer command
-Just spoke with Levi, he thinks we can do away with the Node commands,
-so this will be a php instance.
+This article definitively answers that heroku is very auto-build friendly: https://www.heroku.com/dynos/build
 
-Levi: Mysql over Postgres for sure:
-
-
+I still question if you can automatically run both a Node and Composer command. **edit** I just spoke with Levi, he thinks we can do away with the Node commands,
+so this will be a php instance. Also, we will be using mysql instead of postgres.
 
 How to ensure that the html/css in the web directory are not disrupted by heroku's behind the scene operations.
 The problem:
 https://help.heroku.com/K1PPS2WM/why-are-my-file-uploads-missing-deleted
 
-The Solution:
+One Potential Solution:
 https://aws.amazon.com/cloudfront/getting-started/S3/
-    If after any changes, we store our content and static files in an S3 Bucket,
-    These files will be accessible with a link and credentials stored in the heroku
-    environmental variables and will persist through heroku instance resets.
-    Hopefully Craft can handle this.
+If after any changes, we store our content and static files in an S3 Bucket,
+These files will be accessible with a link and credentials stored in the heroku
+environmental variables and will persist through heroku instance resets.
+Hopefully Craft can handle this.
 
+So far, it all sounds doable. 
 
-So far, it all sounds doable. The plan: set up a test craft site using postgres located at opensgf.ethanzitting.com
+## The plan: set up a test craft site using postgres located at opensgf.ethanzitting.com
 Tools Involved: PHP Heroku Build, Composer, Craft, Nginx, AS3, Mysql, Git
 
-
 So, I created a simple app in heroku.com.
-What are heroku apps?
 
 I'm not going to set it up in a pipeline yet.
-What is a pipeline?
 
-I connected it to a new empty craft site repo on github and enabled automatic deployments when the
+I connected it to a new empty craft site repo on github and enabled automatic redeployments when the
 main branch changes.
-What are automatic deployments?
 
 I made a new directory on my macbook heroku-craft-site
 
 I cd'ed into it and ran `composer create-project craftcms/craft .`
 
-It asks me if I am ready to set up craft. I tell it no. It tells me to run
-`php CURRENT_DIRECTORY/craft setup` when I'm ready.
+It asks me if I am ready to set up craft. I tell it no. It tells me to run `php CURRENT_DIRECTORY/craft setup` when I'm ready.
 
 
 Here I run into a preexisting problem. My mysql is giving me the following problem:
@@ -83,96 +75,96 @@ Login Successful
 
 I run `SHOW DATABASES;` to see which ones currently exist.
 I run `CREATE DATABASE herokuDB;` to create an empty test database.
-`exit;` to exit mysql
+I run `exit;` to exit mysql
 
-`php craft setup` to resume setup
+I run `php craft setup` to resume setup. While setting up, I give it my mysql login information.
 
-`mysql`
-`root`
-`${mysqlPassword}`
-`herokuDB`
+I get back "Installed Craft Successfully"
 
-`admin`
-`ethanzitting@gmail.com`
-`${craftPassword}`
-`Heroku Craft Site`
-`https://opensgf.ethanzitting.com/`
-`en`
+I open the file config/db.php.
+This file retrieves the heroku environmental variables and makes them accessible to craft
+The guide I'm following tells me to enter the following there:
 
-"Installed Craft Successfully"
+    preg_match('|postgres://([a-z0-9]*):([a-z0-9]*)@([^:]*):([0-9]*)/(.*)|i', getenv('DATABASE_URL'), $matches);
 
-I enter config/db.php
-This parses the heroku environmental variables and makes them accessible to craft
-The guide I'm following tells me to do the following:
-preg_match('|postgres://([a-z0-9]*):([a-z0-9]*)@([^:]*):([0-9]*)/(.*)|i', getenv('DATABASE_URL'), $matches);
+    $user = $matches[1];
+    $password = $matches[2];
+    $server = $matches[3];
+    $port = $matches[4];
+    $database = $matches[5];
 
-$user = $matches[1];
-$password = $matches[2];
-$server = $matches[3];
-$port = $matches[4];
-$database = $matches[5];
+    return [
+    'driver' => "pgsql",
+    'server' => $server,
+    'user' => $user,
+    'password' => $password,
+    'database' => $database,
+    'schema' => getenv('DB_SCHEMA'),
+    'tablePrefix' => getenv('DB_TABLE_PREFIX'),
+    'port' => $port
+    ];
 
-return [
-'driver' => "pgsql",
-'server' => $server,
-'user' => $user,
-'password' => $password,
-'database' => $database,
-'schema' => getenv('DB_SCHEMA'),
-'tablePrefix' => getenv('DB_TABLE_PREFIX'),
-'port' => $port
-];
 I need to make sure this is not postgres specific. I'm sure this is important code to get things working.
 It is not postgres specific aside from the 'driver' attribute. It's standard php code parsing the DATABASE_URL
-variable that heroky provides
+variable that heroky provides.
 
-I swap the 'driver' value out for mysql and replace db.php with this code.
+I swap the 'driver' value out for mysql and save this file.
 
 To run my local environment, I need to have some data stored in DATABASE_URL
 
 I add the following to my .env file:
-DATABASE_URL="mysql://[MYSQL USERNAME]:@localhost:[PORT]/[MYSQL DB NAME]"
+`DATABASE_URL="mysql://[MYSQL USERNAME]:@localhost:[PORT]/[MYSQL DB NAME]"`
+
 This comes out to:
-DATABASE_URL="mysql://root:@localhost:3306/herokuDB"
+`DATABASE_URL="mysql://root:@localhost:3306/herokuDB"`
 
 The IP and port were the default when craft was setting itself up. I assume they are correct.
-Potential for bugs on this step.
+**There is a potential for bugs on this step.**
 
-I address .gitignore and pull in my rebust .gitignore from another craft file
+I update .gitignore to include the following.
 
-/.env
-/.idea
-/.vscode
-/vendor
-.DS_Store
-storage/**
-!storage/.gitkeep
-config/license.key
-/node_modules
-!web/index.php
-!web/.htaccess
-!web/web.config
-web/*.js
-web/*.css
-web/*.png
-web/*.jpg
-web/*.jpeg
-web/assets/*
-web/mix-manifest.json
-assets/static/*
+    /.env
+    /.idea
+    /.vscode
+    /vendor
+    .DS_Store
+    storage/**
+    !storage/.gitkeep
+    config/license.key
+    /node_modules
+    !web/index.php
+    !web/.htaccess
+    !web/web.config
+    web/*.js
+    web/*.css
+    web/*.png
+    web/*.jpg
+    web/*.jpeg
+    web/assets/*
+    web/mix-manifest.json
+    assets/static/*
 
-basically, I want to keep image files and generated public html/css/js out of the git repo
+Basically, I want to keep images, keys, and generated public html/css/js out of the git repo
+
+I run the following:
 
 `git init` in my app's root directory
+
 `git add .` to start tracking all unignored files in the project
+
 `git commit -m 'first commit'`
+
 `git remote add origin git@github.com:ethanzitting/heroku-craft-site.git` to link to github
+
 I already had ssh permissions set up for my github.
+
 `git checkout -b main` to fix my outdated git starting in master
+
 `git branch -d master` removing master branch
+
 `git push --set-upstream origin main` linking my local main branch to my github main branch
 
-The guide I'm following now recommends the Heroky CLI. I install it.
+The guide I'm following now recommends the Heroky CLI. I install it: 
 `brew tap heroku/brew && brew install heroku`
 
 Now is the time to link mysql to this project
