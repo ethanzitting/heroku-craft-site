@@ -169,27 +169,9 @@ The guide I'm following now recommends the Heroky CLI. I install it:
 
 Now is the time to link mysql to this project
 
-Progress on the heroku dyno is going well. Just to keep you posted on my thought process so you can catch me if
-I'm heading down the wrong path. We will have source code for the craft site that is separated from the data,
-assets, and content of the site (maybe content qualifies as an asset). The data will be stored in mysql.
-The assets and content will be store in an CDN that we set up in S3. When the craft site starts or reboots,
-it will access the data and assets, compile them, and then serve them. When a client is in the admin portal for
-the site editing content, the site will be in constant communication with mysql and S3 editing and requesting
-the content stored there, them compiling it to serve it. All of this seems possible so far. There are several
-S3 plugins for heroku that seem to simplify using it and merge it's billing into the heroku monthly bill. Are
-those preferable for ease of use, and so that Code For America would then be paying for it? They all start at $5/mo
-
-Actually, I think that the craft site probably wont serve any css or js ideally. I think CDN links for all
-of those would be sick.
-
-Are there performance considerations here I'm not seeing?
-
-I went ahead and added JawsDB MYSQL ($10/mo) and Bucketeer for S3 ($5/mo)
-I think of it as tuition, and if I answer these questions in a week or two, It's just a couple of bucks.
-
 In the heroku settings, I am editing the config variables.
 I think I need to edit JAWSDB_URL. My guide is saying that should probably be DATABASE_URL.
-Potential for Bug Here.
+**Potential for Bug Here.**
 
 config additions:
 ENVIRONMENT="dev"
@@ -216,13 +198,13 @@ Current Step:
 Configure my Heroku Project to use JawsDB, uploade my local mysql database to JawsDB, verify these.
 
 Heard from Levi:
-Deleted bucketeer plugin
 Upgrading my jawsDB made a duplication, causing the RED in the env var, I need to revisit that in db.php and .env
 I just removed "RED_" from these two locatiions.
 
-So I am going to dump my local database for the sakes of backing it up.
+So I am going to dump my local database for the sakes of backing it up: 
 `mysqldump -h OLDHOST -u OLDUSER -p OLDDATABASE > backup.sql`
-This translated to `mysqldump -h 127.0.0.1 -u root -p herokuDB > backup.sql`
+
+This translated to: `mysqldump -h 127.0.0.1 -u root -p herokuDB > backup.sql`
 
 I now want to upload this backup to my JAWS database.
 `heroku config:get JAWSDB_URL`
@@ -236,10 +218,11 @@ I now execute the following with that gleaned information
 I think it was a success. My console quietly completed the command after a few minutes.
 
 I create Procfile in the root directory. This is used by Heroky to run the app
-In it, I add the line web: vendor/bin/heroku-php-apache2 web
+In it, I add the line `web: vendor/bin/heroku-php-apache2 web`
+
 I trust this tells heroku to spin up a php instance running apache to serve this site
 
-This deployed the site, but all I see is an error /app/storage doesn't exist or isn't writable by PHP. Please fix that.
+This deployed the site, but all I see is an error: /app/storage doesn't exist or isn't writable by PHP. Please fix that.
 
 I think this is related to php directory permissions, so I'll try starting the site locally
 It could be that, or it could be an issue somewhere in my craft config files.
@@ -258,23 +241,19 @@ Looks like the issue is related to craft failing to access the database.
 I just found 'postgres:' in my db.php that I forgot to change to mysql. I made that change.
 Did not fix the issue.
 
-I install a package that looks like it will provide craft with php imagick
-`composer require calcinai/php-imagick`
+I run: `composer update` and `composer install` for good measure
 
-`composer update` and `composer install` for good measure
-
-I push these two changes up to gihub.
+I push these changes up to gihub.
 
 The heroku site now serves a craft landing page.
-It tells me that it still needs imagick, though.
 Big Success!
+
+It tells me that it still needs imagick, though.
 So now I investigate getting imagick in my php in heroku. It sounds like it cannot be added with composer.
 
-I remove the old php module that wasn't cutting it:
-`composer remove calcinai/php-imagick`
+I run: `composer update`
 
-`composer update`
-I readd "ext-imagick": "*", to my composer.json require section and try pushing it up to heroku.
+I add `"ext-imagick": "*",` to my composer.json require section and try pushing it up to heroku.
 That didn't work, so I'll remove it and push that up.
 
 I'm going to try to alter heroku's buildpack settings to incorporate some elses attempt at getting imagick into php
@@ -282,10 +261,6 @@ heroku buildpacks:add https://github.com/DuckyTeam/heroku-buildpack-imagemagick 
 
 It's taking a very long time, and I think it's throwing lots of error codes?
 That did not work, so I'm going to undo it.
-
-`heroku plugins:install heroku-repo`
-`heroku repo:purge_cache`
-These last two commands were executed in error, not necessary at all
 
 `heroku plugins:remove heroku-repo`
 `heroku buildpacks:remove https://github.com/DuckyTeam/heroku-buildpack-imagemagick`
@@ -314,24 +289,28 @@ I installed all the node modules from the motherhood reclaimed project.
 Now I'm looking to have composer automatically install npm and it's modules on start up.
 
 I added the following to the script section of my composer.json
+`
 "post-install-cmd": [
 "npm install",
 "npm mix"
 ]
+`
 
 After moving the nodejs buildpack first in the load order in heroku, it seems to succeed up to npm install.
 I think `npm mix` is the wrong command.
 
 I copy over the npm scripts from motherhood reclaimed:
+`
 "scripts": {
 "dev": "mix",
 "watch": "mix watch",
 "production": "mix --production"
 },
+`
 
 Doing this allows me to call laravel mix with `npm run production`
 But it throws an error because I haven't added a laravel config file yet.
-I create webpack.mix.js and import the contents from MOtherhood reclaimed
+I create webpack.mix.js and import the contents from Motherhood reclaimed
 
 I create the assets folder to match what webpack.mix.js expects.
 
